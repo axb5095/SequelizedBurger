@@ -3,58 +3,52 @@ var express = require("express");
 var router = express.Router();
 
 // Import the model (burger.js) to use its database functions.
-var burger = require("../models/burger.js");
+var db = require("../models")
 
 // Create all our routes and set up logic within those routes where required.
 router.get("/", function(req, res) {
-  burger.all(function(data) {
+  db.burger.findAll().then(function(data) {
+  const burgerList = data.map(burger => burger.dataValues);
+  console.log(burgerList);    
     var hbsObject = {
-      burger: data
+      burger: burgerList
     };
-    console.log(hbsObject);
     res.render("index", hbsObject);
   });
 });
 
 router.post("/api/burger", function(req, res) {
-  burger.create([
-    "name", "eateny"
-  ], [
-    req.body.name, req.body.eaten
-  ], function(result) {
+  db.burger.create({
+    name: req.body.name,
+    Eaten: false
+  }).then(function(result) {
     // Send back the ID of the new quote
     res.json({ id: result.insertId });
   });
 });
 
 router.put("/api/burger/:id", function(req, res) {
-  var condition = "id = " + req.params.id;
-
-  console.log("condition", condition);
-
-  burger.update({
-    eaten: req.body.eaten
-  }, condition, function(result) {
-    if (result.changedRows == 0) {
-      // If no rows were changed, then the ID must not exist, so 404
-      return res.status(404).end();
-    } else {
-      res.status(200).end();
+  console.log("this hit");
+  db.burger.update({
+    Eaten: req.body.eaten
+  }, {
+    where: {
+      id: req.params.id
     }
+  }).then(function(result) {
+    res.status(200).end();
   });
 });
 
 router.delete("/api/burger/:id", function(req, res) {
-  var condition = "id = " + req.params.id;
-
-  burger.delete(condition, function(result) {
-    if (result.affectedRows == 0) {
-      // If no rows were changed, then the ID must not exist, so 404
-      return res.status(404).end();
-    } else {
-      res.status(200).end();
+  
+  db.burger.destroy({
+    where: {
+      id: req.params.id
     }
-  });
+  }).then(function() {
+    res.status(200).end()
+  })
 });
 
 // Export routes for server.js to use.
